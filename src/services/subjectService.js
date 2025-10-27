@@ -42,8 +42,15 @@ export const getSubjectById = async (subjectId) => {
   return disciplina;
 };
 
+const professorExists = async (professorId) => {
+  const professor = await prisma.user.findUnique({
+    where: { id: professorId },
+  });
+  return !!professor;
+};
+
 const nomeExists = async (nome) => {
-  const disciplina = await prisma.subject.findUnique({
+  const disciplina = await prisma.subject.findFirst({
     where: { nome },
   });
   return !!disciplina;
@@ -59,16 +66,17 @@ const validateSubjectData = (subjectData) => {
 export const createSubject = async (subjectData) => {
   validateSubjectData(subjectData);
 
-  // ✅ CORREÇÃO: verificar nome em vez de email
-  const nomeJaExiste = await nomeExists(subjectData.nome);
-  if (nomeJaExiste) {
-    throw new Error('Nome de disciplina já cadastrado no sistema');
+  // ✅ PRIMEIRO: Verificar se professor existe 
+  const professorExiste = await professorExists(subjectData.professorId);
+  
+  if (!professorExiste) {
+    throw new Error('Professor não encontrado'); 
   }
-
+  
   const novaDisciplina = await prisma.subject.create({
     data: {
       nome: subjectData.nome,
-      ativa: subjectData.ativa ?? true, // default true
+      ativa: subjectData.ativa ?? true,
       professorId: subjectData.professorId,
     },
     select: {
@@ -80,10 +88,11 @@ export const createSubject = async (subjectData) => {
       updatedAt: true
     },
   });
+
   return novaDisciplina;
 };
 
-export const updateSubject = async (subjectId, subjectData) => { // ✅ Nome correto
+export const updateSubject = async (subjectId, subjectData) => {
   if (!subjectId || isNaN(subjectId) || subjectId <= 0) {
     throw new Error('ID inválido. Deve ser um número positivo');
   }
@@ -94,6 +103,14 @@ export const updateSubject = async (subjectId, subjectData) => { // ✅ Nome cor
 
   if (!disciplinaExistente) {
     throw new Error(`Disciplina com ID ${subjectId} não encontrada`);
+  }
+
+  // ✅ VALIDAR professor se estiver sendo atualizado
+  if (subjectData.professorId) {
+    const professorExiste = await professorExists(subjectData.professorId);
+    if (!professorExiste) {
+      throw new Error('Professor não encontrado');
+    }
   }
 
   if (subjectData.nome && (subjectData.nome !== disciplinaExistente.nome)) {

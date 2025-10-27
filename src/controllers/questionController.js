@@ -62,14 +62,18 @@ export const create = async (req, res) => {
     const novaQuestao = await questionService.createQuestion(req.body);
     res.status(201).json({
       success: true,
-      message: 'Questão criada com sucesso', // ✅ Mensagem corrigida
+      message: 'Questão criada com sucesso', 
       data: novaQuestao,
     });
   } catch (error) {
     if (
       error.message.includes('obrigatórios') ||
       error.message.includes('já cadastrado') ||
-      error.message.includes('Dificuldade deve ser')
+      error.message.includes('Dificuldade deve ser') ||
+      error.message.includes('não encontrada') ||
+      error.message.includes('não encontrado') ||
+      error.message.includes('Disciplina não encontrada') || 
+      error.message.includes('Autor não encontrado')  
     ) {
       return res.status(400).json({
         success: false,
@@ -93,7 +97,7 @@ export const update = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Questão atualizada com sucesso', // ✅ Mensagem corrigida
+      message: 'Questão atualizada com sucesso', 
       data: questaoAtualizada,
     });
   } catch (error) {
@@ -127,7 +131,7 @@ export const remove = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Questão removida com sucesso', // ✅ Mensagem corrigida
+      message: 'Questão removida com sucesso',
       data: questaoRemovida,
     });
   } catch (error) {

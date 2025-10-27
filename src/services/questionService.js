@@ -49,18 +49,31 @@ export const getQuestionById = async (questionId) => {
 };
 
 const enunciadoExists = async (enunciado) => {
-  const questao = await prisma.question.findUnique({
-    where: { enunciado }, // ✅ CORREÇÃO: busca por enunciado, não email
+  const questao = await prisma.question.findFirst({
+    where: { enunciado }, 
   });
   return !!questao;
 };
 
-const validateQuestionData = (questionData) => {
-  const { enunciado, dificuldade, respostaCorreta, disciplinaId, autorId } = questionData;
+const disciplinaExists = async (disciplinaId) => {
+  const disciplina = await prisma.subject.findUnique({
+    where: { id: disciplinaId },
+  });
+  return !!disciplina;
+};
 
-  // ✅ CORREÇÃO: 'ativa' não é obrigatória (tem default)
-  if (!enunciado || !dificuldade || !respostaCorreta || !disciplinaId || !autorId) {
-    throw new Error('Enunciado, dificuldade, resposta correta, id da disciplina e id do autor são obrigatórios');
+const autorExists = async (autorId) => {
+  const autor = await prisma.user.findUnique({
+    where: { id: autorId },
+  });
+  return !!autor;
+};
+
+const validateQuestionData = (questionData) => {
+  const { enunciado, dificuldade, disciplinaId, autorId } = questionData;
+
+  if (!enunciado || !dificuldade || !disciplinaId || !autorId) {
+    throw new Error('Enunciado, dificuldade, id da disciplina e id do autor são obrigatórios');
   }
 
   // ✅ Validação adicional para dificuldade
@@ -69,13 +82,23 @@ const validateQuestionData = (questionData) => {
   }
 };
 
-export const createQuestion = async (questionData) => { // ✅ Nome correto
+export const createQuestion = async (questionData) => { 
   validateQuestionData(questionData);
 
-  // ✅ CORREÇÃO: verificar enunciado, não email
   const enunciadoJaExiste = await enunciadoExists(questionData.enunciado);
   if (enunciadoJaExiste) {
     throw new Error('Enunciado já cadastrado no sistema');
+  }
+
+    const disciplinaExiste = await disciplinaExists(questionData.disciplinaId);
+  if (!disciplinaExiste) {
+    throw new Error('Disciplina não encontrada');
+  }
+
+  // Verificar se autor existe
+  const autorExiste = await autorExists(questionData.autorId);
+  if (!autorExiste) {
+    throw new Error('Autor não encontrado');
   }
 
   const novaQuestao = await prisma.question.create({
@@ -181,7 +204,6 @@ export const deleteQuestion = async (questionId) => {
   return questaoExistente;
 };
 
-// ✅ CORREÇÃO: Exportações corretas
 export default {
   getAllQuestions,
   getQuestionById,
