@@ -44,7 +44,7 @@ app.get('/health', async (req, res) => {
 });
 
 // Rotas da API
-app.use('/users', userRoutes); 
+app.use('/users', userRoutes);
 app.use('/subjects', subjectRoutes);
 app.use('/questions', questionRoutes);
 // <--

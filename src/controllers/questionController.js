@@ -62,7 +62,7 @@ export const create = async (req, res) => {
     const novaQuestao = await questionService.createQuestion(req.body);
     res.status(201).json({
       success: true,
-      message: 'Questão criada com sucesso', 
+      message: 'Questão criada com sucesso',
       data: novaQuestao,
     });
   } catch (error) {
@@ -72,8 +72,8 @@ export const create = async (req, res) => {
       error.message.includes('Dificuldade deve ser') ||
       error.message.includes('não encontrada') ||
       error.message.includes('não encontrado') ||
-      error.message.includes('Disciplina não encontrada') || 
-      error.message.includes('Autor não encontrado')  
+      error.message.includes('Disciplina não encontrada') ||
+      error.message.includes('Autor não encontrado')
     ) {
       return res.status(400).json({
         success: false,
@@ -93,18 +93,34 @@ export const create = async (req, res) => {
 export const update = async (req, res) => {
   try {
     const { id } = req.params;
-    const questaoAtualizada = await questionService.updateQuestion(id, req.body);
+    const questaoAtualizada = await questionService.updateQuestion(
+      id,
+      req.body,
+    );
 
     res.status(200).json({
       success: true,
-      message: 'Questão atualizada com sucesso', 
+      message: 'Questão atualizada com sucesso',
       data: questaoAtualizada,
     });
   } catch (error) {
-    if (error.message.includes('já está em uso') || error.message.includes('Dificuldade deve ser')) {
+    if (
+      error.message.includes('já está em uso') ||
+      error.message.includes('Dificuldade deve ser') ||
+      error.message.includes('Disciplina não encontrada') ||
+      error.message.includes('Autor não encontrado')
+    ) {
       return res.status(400).json({
         success: false,
         message: error.message,
+      });
+    }
+
+    // ✅ TRATAMENTO PARA ERRO DE FOREIGN KEY DO PRISMA
+    if (error.code === 'P2003') {
+      return res.status(400).json({
+        success: false,
+        message: 'Disciplina ou autor não encontrado',
       });
     }
 

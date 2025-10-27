@@ -12,9 +12,9 @@ export const getAllSubjects = async () => {
       id: true,
       nome: true,
       ativa: true,
-      professorId: true,  
+      professorId: true,
       createdAt: true,
-      updatedAt: true
+      updatedAt: true,
     },
     orderBy: {
       createdAt: 'desc',
@@ -23,7 +23,7 @@ export const getAllSubjects = async () => {
   return disciplinas;
 };
 
-export const getSubjectById = async (subjectId) => {
+export const getSubjectById = async subjectId => {
   if (!subjectId || isNaN(subjectId) || subjectId <= 0) {
     throw new Error('ID inválido. Deve ser um número positivo');
   }
@@ -34,45 +34,45 @@ export const getSubjectById = async (subjectId) => {
       id: true,
       nome: true,
       ativa: true,
-      professorId: true,  
+      professorId: true,
       createdAt: true,
-      updatedAt: true
+      updatedAt: true,
     },
   });
   return disciplina;
 };
 
-const professorExists = async (professorId) => {
+const professorExists = async professorId => {
   const professor = await prisma.user.findUnique({
     where: { id: professorId },
   });
   return !!professor;
 };
 
-const nomeExists = async (nome) => {
+const nomeExists = async nome => {
   const disciplina = await prisma.subject.findFirst({
     where: { nome },
   });
   return !!disciplina;
 };
 
-const validateSubjectData = (subjectData) => {
+const validateSubjectData = subjectData => {
   const { nome, professorId } = subjectData;
   if (!nome || !professorId) {
     throw new Error('Nome e ID do professor são obrigatórios.');
   }
 };
 
-export const createSubject = async (subjectData) => {
+export const createSubject = async subjectData => {
   validateSubjectData(subjectData);
 
-  // ✅ PRIMEIRO: Verificar se professor existe 
+  // ✅ PRIMEIRO: Verificar se professor existe
   const professorExiste = await professorExists(subjectData.professorId);
-  
+
   if (!professorExiste) {
-    throw new Error('Professor não encontrado'); 
+    throw new Error('Professor não encontrado');
   }
-  
+
   const novaDisciplina = await prisma.subject.create({
     data: {
       nome: subjectData.nome,
@@ -83,9 +83,9 @@ export const createSubject = async (subjectData) => {
       id: true,
       nome: true,
       ativa: true,
-      professorId: true,  
+      professorId: true,
       createdAt: true,
-      updatedAt: true
+      updatedAt: true,
     },
   });
 
@@ -96,7 +96,7 @@ export const updateSubject = async (subjectId, subjectData) => {
   if (!subjectId || isNaN(subjectId) || subjectId <= 0) {
     throw new Error('ID inválido. Deve ser um número positivo');
   }
-  
+
   const disciplinaExistente = await prisma.subject.findUnique({
     where: { id: parseInt(subjectId) },
   });
@@ -113,7 +113,7 @@ export const updateSubject = async (subjectId, subjectData) => {
     }
   }
 
-  if (subjectData.nome && (subjectData.nome !== disciplinaExistente.nome)) {
+  if (subjectData.nome && subjectData.nome !== disciplinaExistente.nome) {
     const nomeJaExiste = await nomeExists(subjectData.nome);
     if (nomeJaExiste) {
       throw new Error('Nome já está em uso por outra disciplina');
@@ -122,8 +122,10 @@ export const updateSubject = async (subjectId, subjectData) => {
 
   const dadosAtualizacao = {};
   if (subjectData.nome) dadosAtualizacao.nome = subjectData.nome;
-  if (subjectData.ativa !== undefined) dadosAtualizacao.ativa = subjectData.ativa;
-  if (subjectData.professorId) dadosAtualizacao.professorId = subjectData.professorId;
+  if (subjectData.ativa !== undefined)
+    dadosAtualizacao.ativa = subjectData.ativa;
+  if (subjectData.professorId)
+    dadosAtualizacao.professorId = subjectData.professorId;
 
   const disciplinaAtualizada = await prisma.subject.update({
     where: { id: parseInt(subjectId) },
@@ -140,7 +142,7 @@ export const updateSubject = async (subjectId, subjectData) => {
   return disciplinaAtualizada;
 };
 
-export const deleteSubject = async (subjectId) => {
+export const deleteSubject = async subjectId => {
   if (!subjectId || isNaN(subjectId) || subjectId <= 0) {
     throw new Error('ID inválido. Deve ser um número positivo');
   }
@@ -171,5 +173,5 @@ export default {
   getSubjectById,
   createSubject,
   deleteSubject,
-  updateSubject
+  updateSubject,
 };

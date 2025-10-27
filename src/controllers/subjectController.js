@@ -62,15 +62,15 @@ export const create = async (req, res) => {
     const novaDisciplina = await subjectService.createSubject(req.body);
     res.status(201).json({
       success: true,
-      message: 'Disciplina criada com sucesso', 
+      message: 'Disciplina criada com sucesso',
       data: novaDisciplina,
     });
   } catch (error) {
     if (
       error.message.includes('obrigatórios') ||
       error.message.includes('já cadastrado') ||
-      error.message.includes('não encontrado') || 
-      error.message.includes('Professor não encontrado') 
+      error.message.includes('não encontrado') ||
+      error.message.includes('Professor não encontrado')
     ) {
       return res.status(400).json({
         success: false,
@@ -90,7 +90,10 @@ export const create = async (req, res) => {
 export const update = async (req, res) => {
   try {
     const { id } = req.params;
-    const disciplinaAtualizada = await subjectService.updateSubject(id, req.body);
+    const disciplinaAtualizada = await subjectService.updateSubject(
+      id,
+      req.body,
+    );
 
     res.status(200).json({
       success: true,
@@ -100,10 +103,9 @@ export const update = async (req, res) => {
   } catch (error) {
     if (
       error.message.includes('já está em uso') ||
-      error.message.includes('não encontrado') || 
+      error.message.includes('não encontrado') ||
       error.message.includes('Professor não encontrado')
-    )
-    {
+    ) {
       return res.status(400).json({
         success: false,
         message: error.message,

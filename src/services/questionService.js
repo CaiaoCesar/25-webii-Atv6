@@ -9,15 +9,15 @@ import prisma from '../config/database.js';
 export const getAllQuestions = async () => {
   const questoes = await prisma.question.findMany({
     select: {
-      id: true,             
-      enunciado: true,    
+      id: true,
+      enunciado: true,
       dificuldade: true,
       respostaCorreta: true,
-      disciplinaId: true,   
+      disciplinaId: true,
       autorId: true,
       ativa: true,
       createdAt: true,
-      updatedAt: true
+      updatedAt: true,
     },
     orderBy: {
       createdAt: 'desc',
@@ -26,7 +26,7 @@ export const getAllQuestions = async () => {
   return questoes;
 };
 
-export const getQuestionById = async (questionId) => {
+export const getQuestionById = async questionId => {
   if (!questionId || isNaN(questionId) || questionId <= 0) {
     throw new Error('ID inválido. Deve ser um número positivo');
   }
@@ -34,46 +34,48 @@ export const getQuestionById = async (questionId) => {
   const questao = await prisma.question.findUnique({
     where: { id: parseInt(questionId) },
     select: {
-      id: true,             
-      enunciado: true,    
+      id: true,
+      enunciado: true,
       dificuldade: true,
       respostaCorreta: true,
-      disciplinaId: true,   
+      disciplinaId: true,
       autorId: true,
       ativa: true,
       createdAt: true,
-      updatedAt: true
+      updatedAt: true,
     },
   });
   return questao;
 };
 
-const enunciadoExists = async (enunciado) => {
+const enunciadoExists = async enunciado => {
   const questao = await prisma.question.findFirst({
-    where: { enunciado }, 
+    where: { enunciado },
   });
   return !!questao;
 };
 
-const disciplinaExists = async (disciplinaId) => {
+const disciplinaExists = async disciplinaId => {
   const disciplina = await prisma.subject.findUnique({
     where: { id: disciplinaId },
   });
   return !!disciplina;
 };
 
-const autorExists = async (autorId) => {
+const autorExists = async autorId => {
   const autor = await prisma.user.findUnique({
     where: { id: autorId },
   });
   return !!autor;
 };
 
-const validateQuestionData = (questionData) => {
+const validateQuestionData = questionData => {
   const { enunciado, dificuldade, disciplinaId, autorId } = questionData;
 
   if (!enunciado || !dificuldade || !disciplinaId || !autorId) {
-    throw new Error('Enunciado, dificuldade, id da disciplina e id do autor são obrigatórios');
+    throw new Error(
+      'Enunciado, dificuldade, id da disciplina e id do autor são obrigatórios',
+    );
   }
 
   // ✅ Validação adicional para dificuldade
@@ -82,7 +84,7 @@ const validateQuestionData = (questionData) => {
   }
 };
 
-export const createQuestion = async (questionData) => { 
+export const createQuestion = async questionData => {
   validateQuestionData(questionData);
 
   const enunciadoJaExiste = await enunciadoExists(questionData.enunciado);
@@ -90,7 +92,7 @@ export const createQuestion = async (questionData) => {
     throw new Error('Enunciado já cadastrado no sistema');
   }
 
-    const disciplinaExiste = await disciplinaExists(questionData.disciplinaId);
+  const disciplinaExiste = await disciplinaExists(questionData.disciplinaId);
   if (!disciplinaExiste) {
     throw new Error('Disciplina não encontrada');
   }
@@ -108,18 +110,19 @@ export const createQuestion = async (questionData) => {
       respostaCorreta: questionData.respostaCorreta,
       disciplinaId: questionData.disciplinaId,
       autorId: questionData.autorId,
-      ativa: questionData.ativa ?? true // default true
+      ativa: questionData.ativa ?? true, // default true
     },
+
     select: {
-      id: true,             
-      enunciado: true,    
+      id: true,
+      enunciado: true,
       dificuldade: true,
       respostaCorreta: true,
-      disciplinaId: true,   
+      disciplinaId: true,
       autorId: true,
       ativa: true,
       createdAt: true,
-      updatedAt: true
+      updatedAt: true,
     },
   });
   return novaQuestao;
@@ -138,7 +141,26 @@ export const updateQuestion = async (questionId, questionData) => {
     throw new Error(`Questão com ID ${questionId} não encontrada`);
   }
 
-  if (questionData.enunciado && (questionData.enunciado !== questaoExistente.enunciado)) {
+  // ✅ VALIDAÇÃO NOVA: Verificar se disciplina existe (se foi fornecida)
+  if (questionData.disciplinaId) {
+    const disciplinaExiste = await disciplinaExists(questionData.disciplinaId);
+    if (!disciplinaExiste) {
+      throw new Error('Disciplina não encontrada');
+    }
+  }
+
+  // ✅ VALIDAÇÃO NOVA: Verificar se autor existe (se foi fornecido)
+  if (questionData.autorId) {
+    const autorExiste = await autorExists(questionData.autorId);
+    if (!autorExiste) {
+      throw new Error('Autor não encontrado');
+    }
+  }
+
+  if (
+    questionData.enunciado &&
+    questionData.enunciado !== questaoExistente.enunciado
+  ) {
     const enunciadoJaExiste = await enunciadoExists(questionData.enunciado);
     if (enunciadoJaExiste) {
       throw new Error('Enunciado já está em uso por outra questão');
@@ -146,37 +168,45 @@ export const updateQuestion = async (questionId, questionData) => {
   }
 
   // ✅ Validação de dificuldade na atualização também
-  if (questionData.dificuldade && (questionData.dificuldade < 1 || questionData.dificuldade > 5)) {
+  if (
+    questionData.dificuldade &&
+    (questionData.dificuldade < 1 || questionData.dificuldade > 5)
+  ) {
     throw new Error('Dificuldade deve ser entre 1 e 5');
   }
 
   const dadosAtualizacao = {};
-  if (questionData.enunciado) dadosAtualizacao.enunciado = questionData.enunciado;
-  if (questionData.dificuldade) dadosAtualizacao.dificuldade = questionData.dificuldade;
-  if (questionData.respostaCorreta) dadosAtualizacao.respostaCorreta = questionData.respostaCorreta;
-  if (questionData.disciplinaId) dadosAtualizacao.disciplinaId = questionData.disciplinaId;
+  if (questionData.enunciado)
+    dadosAtualizacao.enunciado = questionData.enunciado;
+  if (questionData.dificuldade)
+    dadosAtualizacao.dificuldade = questionData.dificuldade;
+  if (questionData.respostaCorreta)
+    dadosAtualizacao.respostaCorreta = questionData.respostaCorreta;
+  if (questionData.disciplinaId)
+    dadosAtualizacao.disciplinaId = questionData.disciplinaId;
   if (questionData.autorId) dadosAtualizacao.autorId = questionData.autorId;
-  if (questionData.ativa !== undefined) dadosAtualizacao.ativa = questionData.ativa;
+  if (questionData.ativa !== undefined)
+    dadosAtualizacao.ativa = questionData.ativa;
 
   const questaoAtualizada = await prisma.question.update({
     where: { id: parseInt(questionId) },
     data: dadosAtualizacao,
     select: {
-      id: true,             
-      enunciado: true,    
+      id: true,
+      enunciado: true,
       dificuldade: true,
       respostaCorreta: true,
-      disciplinaId: true,   
+      disciplinaId: true,
       autorId: true,
       ativa: true,
       createdAt: true,
-      updatedAt: true
+      updatedAt: true,
     },
   });
   return questaoAtualizada;
 };
 
-export const deleteQuestion = async (questionId) => {
+export const deleteQuestion = async questionId => {
   if (!questionId || isNaN(questionId) || questionId <= 0) {
     throw new Error('ID inválido. Deve ser um número positivo');
   }
@@ -184,11 +214,11 @@ export const deleteQuestion = async (questionId) => {
   const questaoExistente = await prisma.question.findUnique({
     where: { id: parseInt(questionId) },
     select: {
-      id: true,             
-      enunciado: true,    
+      id: true,
+      enunciado: true,
       dificuldade: true,
       respostaCorreta: true,
-      disciplinaId: true,   
+      disciplinaId: true,
       autorId: true,
     },
   });
@@ -209,5 +239,5 @@ export default {
   getQuestionById,
   createQuestion,
   deleteQuestion,
-  updateQuestion
+  updateQuestion,
 };
